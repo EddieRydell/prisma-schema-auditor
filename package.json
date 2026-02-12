@@ -1,0 +1,80 @@
+{
+  "name": "prisma-schema-auditor",
+  "version": "0.1.0",
+  "description": "Static analysis for Prisma schemas: deterministic constraint contracts + normalization lint findings (1NF/2NF; 3NF+ via invariants)",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "prisma-schema-auditor": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc -p tsconfig.test.json",
+    "lint": "eslint src tests",
+    "lint:fix": "eslint src tests --fix",
+    "knip": "knip",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "ci": "pnpm audit --prod && pnpm run typecheck && pnpm run lint && pnpm run knip && pnpm run test",
+    "prepublishOnly": "pnpm run build",
+    "version": "pnpm run build"
+  },
+  "keywords": [
+    "prisma",
+    "schema",
+    "audit",
+    "normalization",
+    "constraint",
+    "1nf",
+    "2nf",
+    "3nf",
+    "static-analysis",
+    "typescript"
+  ],
+  "author": "EddieRydell",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EddieRydell/prisma-schema-auditor.git"
+  },
+  "homepage": "https://github.com/EddieRydell/prisma-schema-auditor#readme",
+  "bugs": {
+    "url": "https://github.com/EddieRydell/prisma-schema-auditor/issues"
+  },
+  "peerDependencies": {
+    "prisma": ">=7.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@prisma/internals": "^7.0.0",
+    "@types/node": "^25.2.1",
+    "@vitest/coverage-v8": "^4.0.18",
+    "eslint": "^9.0.0",
+    "knip": "^5.0.0",
+    "prisma": "^7.0.0",
+    "semantic-release": "^25.0.3",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^4.0.18"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
+  }
+}
