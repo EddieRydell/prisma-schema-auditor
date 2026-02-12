@@ -66,6 +66,24 @@ describe('check3nf', () => {
     expect(nf3Findings).toHaveLength(0);
   });
 
+  it('all findings have non-null fix suggestions', async () => {
+    const parsed = await parseSchema(resolve(SCHEMAS_DIR, '3nf-violations.prisma'));
+    const contract = extractContract(parsed);
+    const schemaFds = inferFunctionalDependencies(contract);
+
+    const invariants = parseInvariantsFile(resolve(INVARIANTS_DIR, '3nf-invariants.json'));
+    const invariantFds = invariantsToFds(invariants);
+    const allFds = [...schemaFds, ...invariantFds];
+
+    const findings = check3nf(contract, allFds);
+
+    expect(findings.length).toBeGreaterThan(0);
+    for (const f of findings) {
+      expect(f.fix).not.toBeNull();
+      expect(typeof f.fix).toBe('string');
+    }
+  });
+
   it('correctly classifies BCNF vs 3NF violations', async () => {
     const parsed = await parseSchema(resolve(SCHEMAS_DIR, '3nf-violations.prisma'));
     const contract = extractContract(parsed);

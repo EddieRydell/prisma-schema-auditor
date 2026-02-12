@@ -6,6 +6,7 @@ import { z } from 'zod/v4';
 const functionalDependencySchema = z.object({
   determinant: z.array(z.string()).min(1),
   dependent: z.array(z.string()).min(1),
+  note: z.string().optional(),
 });
 
 /**

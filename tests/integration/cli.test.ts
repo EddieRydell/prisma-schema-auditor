@@ -229,6 +229,70 @@ describe('CLI', () => {
     });
   });
 
+  describe('--generate-invariants', () => {
+    it('generates JSON to stdout', async () => {
+      const code = await main(['--schema', BASIC_SCHEMA, '--generate-invariants']);
+      expect(code).toBe(0);
+
+      const parsed = JSON.parse(stdoutOutput.trim());
+      expect(parsed).toHaveProperty('User');
+      expect(parsed).toHaveProperty('Post');
+      expect(parsed.User.functionalDependencies.length).toBeGreaterThan(0);
+    });
+
+    it('respects --pretty', async () => {
+      const code = await main(['--schema', BASIC_SCHEMA, '--generate-invariants', '--pretty']);
+      expect(code).toBe(0);
+
+      const output = stdoutOutput.trim();
+      expect(output).toContain('\n');
+      expect(output).toContain('  ');
+      const parsed = JSON.parse(output);
+      expect(parsed).toHaveProperty('User');
+    });
+
+    it('respects --out', async () => {
+      const tmpFile = join(tmpdir(), 'gen-inv-' + String(Date.now()) + '-' + Math.random().toString(36).slice(2) + '.json');
+      tmpFiles.push(tmpFile);
+
+      const code = await main(['--schema', BASIC_SCHEMA, '--generate-invariants', '--out', tmpFile]);
+      expect(code).toBe(0);
+      expect(stdoutOutput).toBe('');
+
+      const content = readFileSync(tmpFile, 'utf-8');
+      const parsed = JSON.parse(content);
+      expect(parsed).toHaveProperty('User');
+    });
+
+    it('conflicts with --invariants (exit 2)', async () => {
+      const code = await main([
+        '--schema', BASIC_SCHEMA,
+        '--generate-invariants',
+        '--invariants', NF3_INVARIANTS,
+      ]);
+      expect(code).toBe(2);
+      expect(stderrOutput).toContain('cannot be used together');
+    });
+
+    it('exit 3 for unparseable schema', async () => {
+      const code = await main(['--schema', MALFORMED_SCHEMA, '--generate-invariants']);
+      expect(code).toBe(3);
+      expect(stderrOutput).toContain('Failed to parse schema');
+    });
+
+    it('output includes note fields', async () => {
+      const code = await main(['--schema', BASIC_SCHEMA, '--generate-invariants']);
+      expect(code).toBe(0);
+
+      const parsed = JSON.parse(stdoutOutput.trim());
+      const userFds = parsed.User.functionalDependencies;
+      for (const fd of userFds) {
+        expect(fd).toHaveProperty('note');
+        expect(typeof fd.note).toBe('string');
+      }
+    });
+  });
+
   describe('error handling', () => {
     it('returns exit code 3 for unparseable schema', async () => {
       const code = await main(['--schema', MALFORMED_SCHEMA, '--no-timestamp']);

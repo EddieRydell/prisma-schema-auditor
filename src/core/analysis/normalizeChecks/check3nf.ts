@@ -57,6 +57,7 @@ export function check3nf(
         continue;
       }
 
+      const det = fd.determinant.join(', ');
       if (candidateKeyFields.has(dep)) {
         // Dependent is in a candidate key - BCNF violation only (3NF is satisfied)
         findings.push({
@@ -65,7 +66,8 @@ export function check3nf(
           normalForm: 'BCNF',
           model: fd.model,
           field: dep,
-          message: `FD {${fd.determinant.join(', ')}} → {${dep}}: determinant is not a superkey. BCNF violation (${dep} is part of a candidate key, so 3NF is satisfied).`,
+          message: `FD {${det}} → {${dep}}: determinant is not a superkey. BCNF violation (${dep} is part of a candidate key, so 3NF is satisfied).`,
+          fix: `Restructure so that (${det}) is a candidate key, or accept this BCNF violation if intended.`,
         });
       } else {
         // Dependent is not in any candidate key - 3NF violation (and BCNF)
@@ -75,7 +77,8 @@ export function check3nf(
           normalForm: '3NF',
           model: fd.model,
           field: dep,
-          message: `FD {${fd.determinant.join(', ')}} → {${dep}}: transitive dependency detected. "${dep}" depends on non-key attributes {${fd.determinant.join(', ')}} rather than a candidate key.`,
+          message: `FD {${det}} → {${dep}}: transitive dependency detected. "${dep}" depends on non-key attributes {${det}} rather than a candidate key.`,
+          fix: `Move '${dep}' to the model keyed by (${det}), or add @@unique([${det}]) to enforce the dependency.`,
         });
       }
     }

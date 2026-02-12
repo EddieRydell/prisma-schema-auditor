@@ -25,6 +25,21 @@ describe('parseInvariantsFile', () => {
     ]);
   });
 
+  it('parses a valid invariants file with notes', () => {
+    const invariants = parseInvariantsFile(resolve(FIXTURES_DIR, 'with-notes.json'));
+
+    expect(invariants).toHaveProperty('Employee');
+    const fd = invariants.Employee?.functionalDependencies?.[0];
+    expect(fd?.note).toBe('Department info is denormalized onto the employee row');
+  });
+
+  it('parses without note (backward compat)', () => {
+    const invariants = parseInvariantsFile(resolve(FIXTURES_DIR, '3nf-invariants.json'));
+
+    const fd = invariants.Employee?.functionalDependencies?.[0];
+    expect(fd?.note).toBeUndefined();
+  });
+
   it('throws on malformed JSON', () => {
     expect(() => {
       parseInvariantsFile(resolve(FIXTURES_DIR, 'malformed.json'));
@@ -112,6 +127,31 @@ describe('validateInvariantsAgainstContract', () => {
     };
     const findings = validateInvariantsAgainstContract(invariants, userContract);
     expect(findings).toHaveLength(0);
+  });
+
+  it('includes fix string on unknown model finding', () => {
+    const invariants: InvariantsFile = {
+      NonExistentModel: {
+        functionalDependencies: [
+          { determinant: ['a'], dependent: ['b'] },
+        ],
+      },
+    };
+    const findings = validateInvariantsAgainstContract(invariants, { models: [] });
+    expect(findings[0]!.fix).toBe("Update the invariants file to remove or rename model 'NonExistentModel'.");
+  });
+
+  it('includes fix string on unknown field finding', () => {
+    const invariants: InvariantsFile = {
+      User: {
+        functionalDependencies: [
+          { determinant: ['nonExistent'], dependent: ['email'] },
+        ],
+      },
+    };
+    const findings = validateInvariantsAgainstContract(invariants, userContract);
+    const fieldFinding = findings.find((f) => f.field === 'nonExistent');
+    expect(fieldFinding!.fix).toBe("Update the invariants file to remove or rename field 'nonExistent' in model 'User'.");
   });
 
   it('deduplicates fields appearing in both determinant and dependent', () => {

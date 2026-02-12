@@ -40,6 +40,7 @@ function makeResultWithFindings(): AuditResult {
         model: 'User',
         field: 'tagIds',
         message: 'String field "tagIds" may contain a list of values.',
+        fix: "Create a separate table for the values in 'tagIds' and use a relation.",
       },
     ],
     metadata: {
@@ -84,6 +85,13 @@ describe('toJson', () => {
     expect(pretty).toContain('\n');
   });
 
+  it('includes fix field in JSON output', () => {
+    const result = makeResultWithFindings();
+    const json = toJson(result, false);
+    const parsed = JSON.parse(json);
+    expect(parsed.findings[0].fix).toBe("Create a separate table for the values in 'tagIds' and use a relation.");
+  });
+
   it('sorts keys alphabetically', () => {
     const result = makeEmptyResult();
     const json = toJson(result, false);
@@ -118,6 +126,29 @@ describe('toText', () => {
     expect(text).toContain('Model: User');
     expect(text).toContain('PK: (id)');
     expect(text).toContain('Unique: (email)');
+  });
+
+  it('includes Fix line when fix is non-null', () => {
+    const result = makeResultWithFindings();
+    const text = toText(result);
+    expect(text).toContain("Fix: Create a separate table for the values in 'tagIds' and use a relation.");
+  });
+
+  it('omits Fix line when fix is null', () => {
+    const result: AuditResult = {
+      ...makeResultWithFindings(),
+      findings: [{
+        rule: 'NF1_LIST_IN_STRING_SUSPECTED',
+        severity: 'warning',
+        normalForm: '1NF',
+        model: 'User',
+        field: 'tagIds',
+        message: 'String field "tagIds" may contain a list of values.',
+        fix: null,
+      }],
+    };
+    const text = toText(result);
+    expect(text).not.toContain('Fix:');
   });
 
   it('omits timestamp when null', () => {

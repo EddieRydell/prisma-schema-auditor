@@ -57,13 +57,15 @@ function checkPartialDependency(
       fkFd.determinant.every((f) => pkFields.includes(f));
 
     if (isProperSubset) {
+      const subset = fkFd.determinant.join(', ');
       findings.push({
         rule: 'NF2_PARTIAL_DEPENDENCY_SUSPECTED',
         severity: 'warning',
         normalForm: '2NF',
         model: model.name,
         field: null,
-        message: `Composite-key model "${model.name}" has FK fields (${fkFd.determinant.join(', ')}) that are a proper subset of the primary key. Non-key attributes may depend on this subset rather than the full key, which would violate 2NF.`,
+        message: `Composite-key model "${model.name}" has FK fields (${subset}) that are a proper subset of the primary key. Non-key attributes may depend on this subset rather than the full key, which would violate 2NF.`,
+        fix: `Extract fields that depend on (${subset}) into their own model.`,
       });
     }
   }
@@ -101,6 +103,7 @@ function checkJoinTableDuplicatedAttr(
       model: model.name,
       field: null,
       message: `Join table "${model.name}" has extra attributes [${extraFields.join(', ')}] beyond its composite key. Consider whether this should be a first-class entity.`,
+      fix: `Add a dedicated @id to '${model.name}' and treat it as a first-class entity.`,
     });
   }
 }

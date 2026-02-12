@@ -58,6 +58,19 @@ describe('check2nf', () => {
     }
   });
 
+  it('all findings have non-null fix suggestions', async () => {
+    const parsed = await parseSchema(resolve(FIXTURES_DIR, '2nf-violations.prisma'));
+    const contract = extractContract(parsed);
+    const fds = inferFunctionalDependencies(contract);
+    const findings = check2nf(contract, fds);
+
+    expect(findings.length).toBeGreaterThan(0);
+    for (const f of findings) {
+      expect(f.fix).not.toBeNull();
+      expect(typeof f.fix).toBe('string');
+    }
+  });
+
   it('produces no findings for a schema without composite keys', async () => {
     const parsed = await parseSchema(resolve(FIXTURES_DIR, 'basic.prisma'));
     const contract = extractContract(parsed);

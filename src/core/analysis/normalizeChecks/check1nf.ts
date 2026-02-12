@@ -42,6 +42,7 @@ function checkListInString(model: ModelContract, findings: Finding[]): void {
         model: model.name,
         field: field.name,
         message: `String field "${field.name}" may contain a delimited list of values. Consider normalizing into a separate table.`,
+        fix: `Create a separate table for the values in '${field.name}' and use a relation.`,
       });
     }
   }
@@ -78,6 +79,7 @@ function checkRepeatingGroups(model: ModelContract, findings: Finding[]): void {
           model: model.name,
           field: null,
           message: `Fields [${fieldNames}] appear to be a repeating group for "${baseName}". Consider normalizing into a separate table.`,
+          fix: `Create a separate '${baseName}' table with a one-to-many relation from '${model.name}'.`,
         });
       }
     }
@@ -94,6 +96,7 @@ function checkJsonRelation(model: ModelContract, findings: Finding[]): void {
         model: model.name,
         field: field.name,
         message: `Json field "${field.name}" may contain structured data that could be normalized into related tables.`,
+        fix: `If '${field.name}' has a consistent structure, extract it into a related model.`,
       });
     }
   }

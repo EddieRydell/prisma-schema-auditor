@@ -1,0 +1,11 @@
+{
+  "Employee": {
+    "functionalDependencies": [
+      {
+        "determinant": ["departmentId"],
+        "dependent": ["deptName", "deptLocation"],
+        "note": "Department info is denormalized onto the employee row"
+      }
+    ]
+  }
+}

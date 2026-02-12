@@ -58,6 +58,7 @@ export function validateInvariantsAgainstContract(
         model: modelName,
         field: null,
         message: `Invariants reference model "${modelName}" which does not exist in the schema.`,
+        fix: `Update the invariants file to remove or rename model '${modelName}'.`,
       });
       continue;
     }
@@ -75,6 +76,7 @@ export function validateInvariantsAgainstContract(
               model: modelName,
               field,
               message: `Invariants reference field "${field}" which does not exist in model "${modelName}".`,
+              fix: `Update the invariants file to remove or rename field '${field}' in model '${modelName}'.`,
             });
           }
         }

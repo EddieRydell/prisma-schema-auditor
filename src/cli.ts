@@ -4,7 +4,7 @@ import { parseArgs } from 'node:util';
 import { resolve } from 'node:path';
 import { existsSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { audit } from './index.js';
+import { audit, generateInvariants } from './index.js';
 import { toJson } from './core/report/toJson.js';
 import { toText } from './core/report/toText.js';
 import type { OutputFormat } from './core/report/reportTypes.js';
@@ -27,6 +27,7 @@ Options:
   --fail-on <severity>  Exit 1 if findings at this severity or above: error | warning | info
   --no-timestamp        Omit timestamp from output
   --pretty              Pretty-print JSON output
+  --generate-invariants Generate invariants JSON from schema constraints
   --help                Show this help message
 `,
   );
@@ -46,6 +47,7 @@ export async function main(argv?: string[]): Promise<number> {
         'fail-on': { type: 'string' },
         'no-timestamp': { type: 'boolean', default: false },
         pretty: { type: 'boolean', default: false },
+        'generate-invariants': { type: 'boolean', default: false },
         help: { type: 'boolean', default: false },
       },
       strict: true,
@@ -109,6 +111,38 @@ export async function main(argv?: string[]): Promise<number> {
       process.stderr.write(`Error: Invariants file not found: ${invariantsPath}\n`);
       return EXIT_CLI_ERROR;
     }
+  }
+
+  // Handle --generate-invariants
+  const generateMode = args.values['generate-invariants'] === true;
+  if (generateMode && invariantsPath !== undefined) {
+    process.stderr.write('Error: --generate-invariants and --invariants cannot be used together.\n');
+    return EXIT_CLI_ERROR;
+  }
+
+  if (generateMode) {
+    let invariantsResult;
+    try {
+      invariantsResult = await generateInvariants({ schemaPath });
+    } catch (error: unknown) {
+      const detail = error instanceof Error ? error.message : '';
+      process.stderr.write(`Error: Failed to parse schema.${detail !== '' ? ` ${detail}` : ''}\n`);
+      return EXIT_PARSE_ERROR;
+    }
+
+    const output = pretty
+      ? JSON.stringify(invariantsResult, null, 2)
+      : JSON.stringify(invariantsResult);
+
+    const outPath = args.values['out'] as string | undefined;
+    if (outPath !== undefined) {
+      writeFileSync(resolve(outPath), output, 'utf-8');
+    } else {
+      process.stdout.write(output);
+      process.stdout.write('\n');
+    }
+
+    return EXIT_OK;
   }
 
   // Run audit

@@ -43,6 +43,16 @@ describe('audit (integration)', () => {
     expect(result.findings).toHaveLength(0);
   });
 
+  it('detects soft-delete unique consistency issues', async () => {
+    const result = await audit(resolve(FIXTURES_DIR, 'soft-delete.prisma'), true);
+    const sdFindings = result.findings.filter(
+      (f) => f.rule === 'SOFTDELETE_MISSING_IN_UNIQUE',
+    );
+    // User has 1, Product has 2 = 3 total
+    expect(sdFindings).toHaveLength(3);
+    expect(sdFindings.every((f) => f.normalForm === 'SCHEMA')).toBe(true);
+  });
+
   it('handles composite key schema', async () => {
     const result = await audit(resolve(FIXTURES_DIR, 'composite.prisma'), true);
     expect(result.metadata.modelCount).toBe(3);

@@ -43,6 +43,9 @@ export function toText(result: AuditResult): string {
       const field = f.field !== null ? `.${f.field}` : '';
       lines.push(`  [${f.severity.toUpperCase()}] ${f.rule} @ ${f.model}${field}`);
       lines.push(`    ${f.message}`);
+      if (f.fix !== null) {
+        lines.push(`    Fix: ${f.fix}`);
+      }
     }
   } else {
     lines.push('No normalization findings.');

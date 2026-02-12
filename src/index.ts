@@ -33,8 +33,11 @@ import { inferFunctionalDependencies } from './core/analysis/inferFds.js';
 import { check1nf } from './core/analysis/normalizeChecks/check1nf.js';
 import { check2nf } from './core/analysis/normalizeChecks/check2nf.js';
 import { check3nf } from './core/analysis/normalizeChecks/check3nf.js';
+import { checkSoftDelete } from './core/analysis/normalizeChecks/checkSoftDelete.js';
 import { parseInvariantsFile, invariantsToFds, validateInvariantsAgainstContract } from './core/invariants/parse.js';
+import { generateInvariantsFile } from './core/invariants/generate.js';
 import type { AuditResult, Finding } from './core/report/reportTypes.js';
+import type { InvariantsFile } from './core/invariants/schema.js';
 
 /** Options for the audit function. */
 export interface AuditOptions {
@@ -76,6 +79,7 @@ export async function audit(
     ...check1nf(contract),
     ...check2nf(contract, allFds),
     ...check3nf(contract, allFds),
+    ...checkSoftDelete(contract),
     ...invariantFindings,
   ];
 
@@ -89,4 +93,21 @@ export async function audit(
       findingCount: findings.length,
     },
   };
+}
+
+/** Options for generating invariants from a schema. */
+export interface GenerateInvariantsOptions {
+  readonly schemaPath: string;
+}
+
+/**
+ * Generate an invariants file from existing schema constraints.
+ * Parses the schema, extracts constraints, and produces an InvariantsFile
+ * with PK and unique FDs and auto-generated notes.
+ */
+export async function generateInvariants(options: GenerateInvariantsOptions): Promise<InvariantsFile> {
+  const parsed = await parseSchema(options.schemaPath);
+  const contract = extractContract(parsed);
+  const fds = inferFunctionalDependencies(contract);
+  return generateInvariantsFile(contract, fds);
 }

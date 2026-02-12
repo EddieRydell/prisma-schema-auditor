@@ -2,7 +2,7 @@
 export type Severity = 'error' | 'warning' | 'info';
 
 /** Normal form levels. */
-export type NormalForm = '1NF' | '2NF' | '3NF' | 'BCNF';
+export type NormalForm = '1NF' | '2NF' | '3NF' | 'BCNF' | 'SCHEMA';
 
 /** Unique finding rule codes. */
 export type RuleCode =
@@ -14,7 +14,8 @@ export type RuleCode =
   | 'NF3_VIOLATION'
   | 'BCNF_VIOLATION'
   | 'INVARIANT_UNKNOWN_MODEL'
-  | 'INVARIANT_UNKNOWN_FIELD';
+  | 'INVARIANT_UNKNOWN_FIELD'
+  | 'SOFTDELETE_MISSING_IN_UNIQUE';
 
 /** A single normalization finding. */
 export interface Finding {
@@ -24,6 +25,7 @@ export interface Finding {
   readonly model: string;
   readonly field: string | null;
   readonly message: string;
+  readonly fix: string | null;
 }
 
 /** Referential action on a foreign key. */
