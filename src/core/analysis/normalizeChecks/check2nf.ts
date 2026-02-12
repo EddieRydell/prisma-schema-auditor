@@ -31,8 +31,12 @@ export function check2nf(
 }
 
 /**
- * Detect possible partial dependencies: non-key fields that are functionally
- * determined by a proper subset of the composite PK (via FK relationships).
+ * Detect possible partial dependencies in composite-key models.
+ *
+ * When FK fields form a proper subset of the composite PK, non-key attributes
+ * may depend on only that subset rather than the full key — a 2NF violation.
+ * One finding is emitted per FK subset (not per field) since without declared
+ * invariants we cannot attribute specific fields to the subset.
  */
 function checkPartialDependency(
   model: ModelContract,
@@ -40,11 +44,11 @@ function checkPartialDependency(
   fds: readonly FunctionalDependency[],
   findings: Finding[],
 ): void {
-  const nonKeyFields = model.fields
-    .map((f) => f.name)
-    .filter((name) => !pkFields.includes(name));
+  const hasNonKeyFields = model.fields.some((f) => !pkFields.includes(f.name));
+  if (!hasNonKeyFields) {
+    return;
+  }
 
-  // Check if any FK determinant is a proper subset of the PK
   const fkFds = fds.filter((fd) => fd.model === model.name && fd.source === 'fk');
 
   for (const fkFd of fkFds) {
@@ -53,20 +57,14 @@ function checkPartialDependency(
       fkFd.determinant.every((f) => pkFields.includes(f));
 
     if (isProperSubset) {
-      // Find non-key fields that might depend on this FK subset
-      const suspectedFields = nonKeyFields.filter((f) => !fkFd.determinant.includes(f));
-      if (suspectedFields.length > 0) {
-        for (const field of suspectedFields) {
-          findings.push({
-            rule: 'NF2_PARTIAL_DEPENDENCY_SUSPECTED',
-            severity: 'warning',
-            normalForm: '2NF',
-            model: model.name,
-            field,
-            message: `Field "${field}" in composite-key model "${model.name}" may depend on only a subset of the primary key (${fkFd.determinant.join(', ')}). Consider extracting to a separate table.`,
-          });
-        }
-      }
+      findings.push({
+        rule: 'NF2_PARTIAL_DEPENDENCY_SUSPECTED',
+        severity: 'warning',
+        normalForm: '2NF',
+        model: model.name,
+        field: null,
+        message: `Composite-key model "${model.name}" has FK fields (${fkFd.determinant.join(', ')}) that are a proper subset of the primary key. Non-key attributes may depend on this subset rather than the full key, which would violate 2NF.`,
+      });
     }
   }
 }

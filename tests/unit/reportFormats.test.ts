@@ -61,11 +61,19 @@ describe('toJson', () => {
     expect(parsed).toHaveProperty('metadata');
   });
 
-  it('produces deterministic key ordering', () => {
-    const result = makeEmptyResult();
-    const json1 = toJson(result, false);
-    const json2 = toJson(result, false);
-    expect(json1).toBe(json2);
+  it('produces identical output regardless of property insertion order', () => {
+    // Construct two objects with identical data but different key insertion order
+    const result1: AuditResult = {
+      contract: { models: [] },
+      findings: [],
+      metadata: { schemaPath: 'a.prisma', timestamp: null, modelCount: 0, findingCount: 0 },
+    };
+    const result2: AuditResult = {
+      metadata: { findingCount: 0, modelCount: 0, schemaPath: 'a.prisma', timestamp: null },
+      findings: [],
+      contract: { models: [] },
+    };
+    expect(toJson(result1, false)).toBe(toJson(result2, false));
   });
 
   it('pretty-prints when requested', () => {

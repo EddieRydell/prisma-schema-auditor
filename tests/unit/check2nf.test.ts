@@ -34,8 +34,16 @@ describe('check2nf', () => {
     const partialFindings = findings.filter(
       (f) => f.rule === 'NF2_PARTIAL_DEPENDENCY_SUSPECTED',
     );
-    // Should find partial dependency suspects for ProjectAssignment and Enrollment
+    // Should find partial dependency suspects for both Enrollment and ProjectAssignment
     expect(partialFindings.length).toBeGreaterThanOrEqual(1);
+    const models = new Set(partialFindings.map((f) => f.model));
+    expect(models.has('Enrollment')).toBe(true);
+    expect(models.has('ProjectAssignment')).toBe(true);
+
+    // Findings are per FK-subset at model level, not per field
+    for (const f of partialFindings) {
+      expect(f.field).toBeNull();
+    }
   });
 
   it('all findings have correct normalForm', async () => {

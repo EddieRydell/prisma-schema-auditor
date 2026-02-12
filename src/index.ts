@@ -33,8 +33,8 @@ import { inferFunctionalDependencies } from './core/analysis/inferFds.js';
 import { check1nf } from './core/analysis/normalizeChecks/check1nf.js';
 import { check2nf } from './core/analysis/normalizeChecks/check2nf.js';
 import { check3nf } from './core/analysis/normalizeChecks/check3nf.js';
-import { parseInvariantsFile, invariantsToFds } from './core/invariants/parse.js';
-import type { AuditResult } from './core/report/reportTypes.js';
+import { parseInvariantsFile, invariantsToFds, validateInvariantsAgainstContract } from './core/invariants/parse.js';
+import type { AuditResult, Finding } from './core/report/reportTypes.js';
 
 /** Options for the audit function. */
 export interface AuditOptions {
@@ -56,7 +56,7 @@ export async function audit(
       ? { schemaPath: schemaPathOrOptions, noTimestamp }
       : schemaPathOrOptions;
 
-  const shouldOmitTimestamp = options.noTimestamp === true || (typeof schemaPathOrOptions === 'string' && noTimestamp);
+  const shouldOmitTimestamp = options.noTimestamp === true;
 
   const parsed = await parseSchema(options.schemaPath);
   const contract = extractContract(parsed);
@@ -64,16 +64,19 @@ export async function audit(
 
   // Merge invariant-declared FDs if provided
   let allFds = schemaFds;
+  let invariantFindings: readonly Finding[] = [];
   if (options.invariantsPath !== undefined) {
     const invariants = parseInvariantsFile(options.invariantsPath);
     const invariantFds = invariantsToFds(invariants);
     allFds = [...schemaFds, ...invariantFds];
+    invariantFindings = validateInvariantsAgainstContract(invariants, contract);
   }
 
   const findings = [
     ...check1nf(contract),
     ...check2nf(contract, allFds),
     ...check3nf(contract, allFds),
+    ...invariantFindings,
   ];
 
   return {

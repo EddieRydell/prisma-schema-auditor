@@ -40,7 +40,7 @@ describe('inferFunctionalDependencies', () => {
     const fkFd = fds.find((fd) => fd.model === 'Post' && fd.source === 'fk');
     expect(fkFd).toBeDefined();
     expect(fkFd!.determinant).toEqual(['authorId']);
-    expect(fkFd!.dependent).toEqual(['id']);
+    expect(fkFd!.dependent).toEqual(['User.id']);
   });
 
   it('handles composite keys in FD inference', async () => {

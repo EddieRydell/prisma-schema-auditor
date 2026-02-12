@@ -2,11 +2,11 @@
 
 import { parseArgs } from 'node:util';
 import { resolve } from 'node:path';
-import { existsSync } from 'node:fs';
+import { existsSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { audit } from './index.js';
 import { toJson } from './core/report/toJson.js';
 import { toText } from './core/report/toText.js';
-import { writeFileSync } from 'node:fs';
 import type { OutputFormat } from './core/report/reportTypes.js';
 
 /** Exit codes. */
@@ -32,11 +32,12 @@ Options:
   );
 }
 
-async function main(): Promise<number> {
+export async function main(argv?: string[]): Promise<number> {
   let args: ReturnType<typeof parseArgs>;
 
   try {
     args = parseArgs({
+      args: argv,
       options: {
         schema: { type: 'string' },
         invariants: { type: 'string' },
@@ -49,8 +50,9 @@ async function main(): Promise<number> {
       },
       strict: true,
     });
-  } catch {
-    process.stderr.write('Error: Invalid arguments. Use --help for usage.\n');
+  } catch (error: unknown) {
+    const detail = error instanceof Error ? error.message : 'Invalid arguments';
+    process.stderr.write(`Error: ${detail}. Use --help for usage.\n`);
     return EXIT_CLI_ERROR;
   }
 
@@ -113,8 +115,9 @@ async function main(): Promise<number> {
   let result;
   try {
     result = await audit({ schemaPath, invariantsPath, noTimestamp });
-  } catch {
-    process.stderr.write('Error: Failed to parse schema.\n');
+  } catch (error: unknown) {
+    const detail = error instanceof Error ? error.message : '';
+    process.stderr.write(`Error: Failed to parse schema.${detail !== '' ? ` ${detail}` : ''}\n`);
     return EXIT_PARSE_ERROR;
   }
 
@@ -146,10 +149,12 @@ async function main(): Promise<number> {
   return EXIT_OK;
 }
 
-main()
-  .then((code) => {
-    process.exitCode = code;
-  })
-  .catch(() => {
-    process.exitCode = EXIT_PARSE_ERROR;
-  });
+if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main()
+    .then((code) => {
+      process.exitCode = code;
+    })
+    .catch(() => {
+      process.exitCode = EXIT_PARSE_ERROR;
+    });
+}

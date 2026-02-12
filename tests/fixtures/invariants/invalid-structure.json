@@ -1,0 +1,7 @@
+{
+  "Model": {
+    "functionalDependencies": [
+      { "determinant": [], "dependent": ["x"] }
+    ]
+  }
+}

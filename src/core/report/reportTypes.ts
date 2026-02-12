@@ -12,7 +12,9 @@ export type RuleCode =
   | 'NF2_PARTIAL_DEPENDENCY_SUSPECTED'
   | 'NF2_JOIN_TABLE_DUPLICATED_ATTR_SUSPECTED'
   | 'NF3_VIOLATION'
-  | 'BCNF_VIOLATION';
+  | 'BCNF_VIOLATION'
+  | 'INVARIANT_UNKNOWN_MODEL'
+  | 'INVARIANT_UNKNOWN_FIELD';
 
 /** A single normalization finding. */
 export interface Finding {

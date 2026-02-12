@@ -41,11 +41,11 @@ export function inferFunctionalDependencies(
     // Unique → all other fields
     addUniqueFds(model, allFieldNames, fds);
 
-    // FK → referenced fields
+    // FK → referenced fields (namespaced to prevent collision with local fields)
     for (const fk of model.foreignKeys) {
       fds.push({
         determinant: fk.fields,
-        dependent: [...fk.referencedFields],
+        dependent: fk.referencedFields.map((f) => `${fk.referencedModel}.${f}`),
         model: model.name,
         source: 'fk',
       });
