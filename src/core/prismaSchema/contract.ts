@@ -3,6 +3,7 @@ import type {
   ConstraintContract,
   FieldContract,
   ForeignKeyConstraint,
+  IndexConstraint,
   ModelContract,
   PrimaryKeyConstraint,
   ReferentialAction,
@@ -42,6 +43,7 @@ function extractModelContract(model: AuditModel): ModelContract {
   const fields = sortBy([...scalarFields], (f) => f.name).map(extractFieldContract);
   const primaryKey = extractPrimaryKey(model);
   const uniqueConstraints = extractUniqueConstraints(model);
+  const indexes = extractIndexes(model);
   const foreignKeys = extractForeignKeys(model);
 
   return {
@@ -49,6 +51,7 @@ function extractModelContract(model: AuditModel): ModelContract {
     fields,
     primaryKey,
     uniqueConstraints,
+    indexes,
     foreignKeys,
   };
 }
@@ -108,6 +111,15 @@ function extractUniqueConstraints(model: AuditModel): readonly UniqueConstraint[
   }
 
   return sortBy(constraints, (c) => c.fields.join(','));
+}
+
+function extractIndexes(model: AuditModel): readonly IndexConstraint[] {
+  const indexes: IndexConstraint[] = model.indexes.map((idx) => ({
+    name: idx.name,
+    fields: [...idx.fields],
+  }));
+
+  return sortBy(indexes, (idx) => idx.fields.join(','));
 }
 
 function extractForeignKeys(model: AuditModel): readonly ForeignKeyConstraint[] {

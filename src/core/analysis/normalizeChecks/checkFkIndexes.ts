@@ -1,10 +1,9 @@
 import type { ConstraintContract, Finding } from '../../report/reportTypes.js';
 
 /**
- * Check that foreign key fields are covered by a PK or unique constraint prefix.
+ * Check that foreign key fields are covered by a PK, unique constraint, or regular index prefix.
  *
- * DMMF does not expose @@index(), so we can only check coverage via PK/unique.
- * A FK is "covered" if its fields are a leftmost prefix of any PK or unique constraint.
+ * A FK is "covered" if its fields are a leftmost prefix of any PK, unique constraint, or @@index.
  */
 export function checkFkIndexes(contract: ConstraintContract): readonly Finding[] {
   const findings: Finding[] = [];
@@ -13,7 +12,7 @@ export function checkFkIndexes(contract: ConstraintContract): readonly Finding[]
     for (const fk of model.foreignKeys) {
       const fkFields = fk.fields;
 
-      const isCovered = isFkCoveredByConstraint(fkFields, model.primaryKey?.fields ?? null, model.uniqueConstraints);
+      const isCovered = isFkCoveredByIndex(fkFields, model.primaryKey?.fields ?? null, model.uniqueConstraints, model.indexes);
       if (!isCovered) {
         findings.push({
           rule: 'FK_MISSING_INDEX',
@@ -21,7 +20,7 @@ export function checkFkIndexes(contract: ConstraintContract): readonly Finding[]
           normalForm: 'SCHEMA',
           model: model.name,
           field: fkFields.length === 1 ? (fkFields[0] ?? null) : null,
-          message: `Foreign key (${fkFields.join(', ')}) on "${model.name}" referencing "${fk.referencedModel}" is not covered by any PK or unique constraint prefix. Queries joining on this FK may be slow.`,
+          message: `Foreign key (${fkFields.join(', ')}) on "${model.name}" referencing "${fk.referencedModel}" is not covered by any index, PK, or unique constraint prefix. Queries joining on this FK may be slow.`,
           fix: `Add @@index([${fkFields.join(', ')}]) to '${model.name}' for faster joins and cascade operations.`,
         });
       }
@@ -31,17 +30,19 @@ export function checkFkIndexes(contract: ConstraintContract): readonly Finding[]
   return findings;
 }
 
-function isFkCoveredByConstraint(
+function isFkCoveredByIndex(
   fkFields: readonly string[],
   pkFields: readonly string[] | null,
   uniqueConstraints: readonly { readonly fields: readonly string[] }[],
+  indexes: readonly { readonly fields: readonly string[] }[],
 ): boolean {
-  const constraintFieldArrays: readonly (readonly string[])[] = [
+  const allFieldArrays: readonly (readonly string[])[] = [
     ...(pkFields !== null ? [pkFields] : []),
     ...uniqueConstraints.map((uq) => uq.fields),
+    ...indexes.map((idx) => idx.fields),
   ];
 
-  return constraintFieldArrays.some((constraintFields) =>
+  return allFieldArrays.some((constraintFields) =>
     isLeftmostPrefix(fkFields, constraintFields),
   );
 }

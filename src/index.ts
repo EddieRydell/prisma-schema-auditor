@@ -6,6 +6,7 @@ export type {
   FieldContract,
   PrimaryKeyConstraint,
   UniqueConstraint,
+  IndexConstraint,
   ForeignKeyConstraint,
   Finding,
   RuleCode,
@@ -21,6 +22,7 @@ export type {
   AuditField,
   AuditPrimaryKey,
   AuditUniqueIndex,
+  AuditIndex,
   ParseResult,
 } from './core/prismaSchema/types.js';
 

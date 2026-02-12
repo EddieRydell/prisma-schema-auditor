@@ -29,6 +29,10 @@ export function toText(result: AuditResult, options?: FormatOptions): string {
         const label = uq.name !== null ? ` [${uq.name}]` : '';
         lines.push(`    Unique${label}: (${uq.fields.join(', ')})`);
       }
+      for (const idx of model.indexes) {
+        const label = idx.name !== null ? ` [${idx.name}]` : '';
+        lines.push(`    Index${label}: (${idx.fields.join(', ')})`);
+      }
       for (const fk of model.foreignKeys) {
         lines.push(
           `    FK: (${fk.fields.join(', ')}) -> ${fk.referencedModel}(${fk.referencedFields.join(', ')}) onDelete=${fk.onDelete} onUpdate=${fk.onUpdate}`,

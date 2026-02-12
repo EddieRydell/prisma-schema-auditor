@@ -53,6 +53,12 @@ export interface UniqueConstraint {
   readonly isComposite: boolean;
 }
 
+/** A regular (non-unique) index. */
+export interface IndexConstraint {
+  readonly name: string | null;
+  readonly fields: readonly string[];
+}
+
 /** A foreign key constraint. */
 export interface ForeignKeyConstraint {
   readonly fields: readonly string[];
@@ -77,6 +83,7 @@ export interface ModelContract {
   readonly fields: readonly FieldContract[];
   readonly primaryKey: PrimaryKeyConstraint | null;
   readonly uniqueConstraints: readonly UniqueConstraint[];
+  readonly indexes: readonly IndexConstraint[];
   readonly foreignKeys: readonly ForeignKeyConstraint[];
 }
 

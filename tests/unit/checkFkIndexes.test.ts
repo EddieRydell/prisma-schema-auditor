@@ -3,7 +3,7 @@ import { checkFkIndexes } from '../../src/core/analysis/normalizeChecks/checkFkI
 import type { ConstraintContract } from '../../src/core/report/reportTypes.js';
 
 describe('checkFkIndexes', () => {
-  it('flags FK not covered by PK or unique constraint', () => {
+  it('flags FK not covered by PK, unique constraint, or index', () => {
     const contract: ConstraintContract = {
       models: [{
         name: 'Post',
@@ -14,6 +14,7 @@ describe('checkFkIndexes', () => {
         ],
         primaryKey: { fields: ['id'], isComposite: false },
         uniqueConstraints: [],
+        indexes: [],
         foreignKeys: [{
           fields: ['authorId'],
           referencedModel: 'User',
@@ -44,6 +45,7 @@ describe('checkFkIndexes', () => {
         ],
         primaryKey: { fields: ['postId', 'tagId'], isComposite: true },
         uniqueConstraints: [],
+        indexes: [],
         foreignKeys: [{
           fields: ['postId'],
           referencedModel: 'Post',
@@ -69,8 +71,61 @@ describe('checkFkIndexes', () => {
         ],
         primaryKey: { fields: ['id'], isComposite: false },
         uniqueConstraints: [{ name: null, fields: ['userId', 'orgId'], isComposite: true }],
+        indexes: [],
         foreignKeys: [{
           fields: ['userId'],
+          referencedModel: 'User',
+          referencedFields: ['id'],
+          onDelete: 'Cascade',
+          onUpdate: 'Cascade',
+        }],
+      }],
+    };
+
+    const findings = checkFkIndexes(contract);
+    expect(findings).toHaveLength(0);
+  });
+
+  it('does not flag FK covered by regular @@index', () => {
+    const contract: ConstraintContract = {
+      models: [{
+        name: 'Post',
+        fields: [
+          { name: 'id', type: 'Int', isNullable: false, hasDefault: true, isList: false },
+          { name: 'authorId', type: 'Int', isNullable: false, hasDefault: false, isList: false },
+          { name: 'title', type: 'String', isNullable: false, hasDefault: false, isList: false },
+        ],
+        primaryKey: { fields: ['id'], isComposite: false },
+        uniqueConstraints: [],
+        indexes: [{ name: null, fields: ['authorId'] }],
+        foreignKeys: [{
+          fields: ['authorId'],
+          referencedModel: 'User',
+          referencedFields: ['id'],
+          onDelete: 'Cascade',
+          onUpdate: 'Cascade',
+        }],
+      }],
+    };
+
+    const findings = checkFkIndexes(contract);
+    expect(findings).toHaveLength(0);
+  });
+
+  it('does not flag FK covered by composite @@index prefix', () => {
+    const contract: ConstraintContract = {
+      models: [{
+        name: 'Post',
+        fields: [
+          { name: 'id', type: 'Int', isNullable: false, hasDefault: true, isList: false },
+          { name: 'authorId', type: 'Int', isNullable: false, hasDefault: false, isList: false },
+          { name: 'createdAt', type: 'DateTime', isNullable: false, hasDefault: true, isList: false },
+        ],
+        primaryKey: { fields: ['id'], isComposite: false },
+        uniqueConstraints: [],
+        indexes: [{ name: null, fields: ['authorId', 'createdAt'] }],
+        foreignKeys: [{
+          fields: ['authorId'],
           referencedModel: 'User',
           referencedFields: ['id'],
           onDelete: 'Cascade',
@@ -93,6 +148,7 @@ describe('checkFkIndexes', () => {
         ],
         primaryKey: { fields: ['id'], isComposite: false },
         uniqueConstraints: [{ name: null, fields: ['email'], isComposite: false }],
+        indexes: [],
         foreignKeys: [],
       }],
     };

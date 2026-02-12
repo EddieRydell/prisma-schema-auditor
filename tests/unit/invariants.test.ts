@@ -107,6 +107,7 @@ describe('validateInvariantsAgainstContract', () => {
       ],
       primaryKey: { fields: ['id'], isComposite: false },
       uniqueConstraints: [{ name: null, fields: ['email'], isComposite: false }],
+      indexes: [],
       foreignKeys: [],
     }],
   };

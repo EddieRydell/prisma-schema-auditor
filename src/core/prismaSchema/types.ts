@@ -22,6 +22,7 @@ export interface AuditModel {
   readonly fields: readonly AuditField[];
   readonly primaryKey: AuditPrimaryKey | null;
   readonly uniqueIndexes: readonly AuditUniqueIndex[];
+  readonly indexes: readonly AuditIndex[];
   readonly documentation: string | null;
 }
 
@@ -32,6 +33,12 @@ export interface AuditPrimaryKey {
 
 /** Parsed unique index. */
 export interface AuditUniqueIndex {
+  readonly name: string | null;
+  readonly fields: readonly string[];
+}
+
+/** Parsed regular (non-unique) @@index. */
+export interface AuditIndex {
   readonly name: string | null;
   readonly fields: readonly string[];
 }

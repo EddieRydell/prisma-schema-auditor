@@ -39,4 +39,18 @@ describe('parseSchema', () => {
     expect(model).toBeDefined();
     expect(model!.primaryKey).toEqual({ fields: ['postId', 'tagId'] });
   });
+
+  it('parses @@index declarations from raw schema', async () => {
+    const result = await parseSchema(resolve(FIXTURES_DIR, 'fk-with-index.prisma'));
+    const post = result.models.find((m) => m.name === 'Post');
+    expect(post).toBeDefined();
+    expect(post!.indexes).toEqual([{ name: null, fields: ['authorId'] }]);
+  });
+
+  it('returns empty indexes for models without @@index', async () => {
+    const result = await parseSchema(resolve(FIXTURES_DIR, 'basic.prisma'));
+    for (const model of result.models) {
+      expect(model.indexes).toEqual([]);
+    }
+  });
 });

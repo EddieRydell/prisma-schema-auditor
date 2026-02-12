@@ -54,6 +54,16 @@ describe('audit (integration)', () => {
     expect(sdFindings.every((f) => f.normalForm === 'SCHEMA')).toBe(true);
   });
 
+  it('does not flag FK_MISSING_INDEX when @@index covers FK', async () => {
+    const result = await audit(resolve(FIXTURES_DIR, 'fk-with-index.prisma'), true);
+
+    const post = result.contract.models.find((m) => m.name === 'Post')!;
+    expect(post.indexes).toEqual([{ name: null, fields: ['authorId'] }]);
+
+    const fkFindings = result.findings.filter((f) => f.rule === 'FK_MISSING_INDEX');
+    expect(fkFindings).toHaveLength(0);
+  });
+
   it('handles composite key schema', async () => {
     const result = await audit(resolve(FIXTURES_DIR, 'composite.prisma'), true);
     expect(result.metadata.modelCount).toBe(3);
