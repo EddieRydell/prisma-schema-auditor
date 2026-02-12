@@ -1,15 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { resolve } from 'node:path';
-import { parseSchema } from '../../src/core/prismaSchema/parse.js';
-import { extractContract } from '../../src/core/prismaSchema/contract.js';
+import { parseSqlSchema } from '../../src/core/sqlSchema/parse.js';
 import { check1nf } from '../../src/core/analysis/normalizeChecks/check1nf.js';
 
 const FIXTURES_DIR = resolve(import.meta.dirname, '../fixtures/schemas');
 
 describe('check1nf', () => {
-  it('detects list-in-string fields', async () => {
-    const parsed = await parseSchema(resolve(FIXTURES_DIR, '1nf-violations.prisma'));
-    const contract = extractContract(parsed);
+  it('detects list-in-string fields', () => {
+    const contract = parseSqlSchema(resolve(FIXTURES_DIR, '1nf-violations.sql'));
     const findings = check1nf(contract);
 
     const listFindings = findings.filter((f) => f.rule === 'NF1_LIST_IN_STRING_SUSPECTED');
@@ -21,9 +19,8 @@ describe('check1nf', () => {
     expect(fieldNames).toContain('categoryIds');
   });
 
-  it('detects repeating group fields', async () => {
-    const parsed = await parseSchema(resolve(FIXTURES_DIR, '1nf-violations.prisma'));
-    const contract = extractContract(parsed);
+  it('detects repeating group fields', () => {
+    const contract = parseSqlSchema(resolve(FIXTURES_DIR, '1nf-violations.sql'));
     const findings = check1nf(contract);
 
     const repeatFindings = findings.filter((f) => f.rule === 'NF1_REPEATING_GROUP_SUSPECTED');
@@ -42,9 +39,8 @@ describe('check1nf', () => {
     expect(productAddressFinding).toBeDefined();
   });
 
-  it('detects Json fields as potential embedded relations', async () => {
-    const parsed = await parseSchema(resolve(FIXTURES_DIR, '1nf-violations.prisma'));
-    const contract = extractContract(parsed);
+  it('detects Json fields as potential embedded relations', () => {
+    const contract = parseSqlSchema(resolve(FIXTURES_DIR, '1nf-violations.sql'));
     const findings = check1nf(contract);
 
     const jsonFindings = findings.filter((f) => f.rule === 'NF1_JSON_RELATION_SUSPECTED');
@@ -55,9 +51,8 @@ describe('check1nf', () => {
     expect(fieldNames).toContain('attributes');
   });
 
-  it('all findings have severity and normalForm set correctly', async () => {
-    const parsed = await parseSchema(resolve(FIXTURES_DIR, '1nf-violations.prisma'));
-    const contract = extractContract(parsed);
+  it('all findings have severity and normalForm set correctly', () => {
+    const contract = parseSqlSchema(resolve(FIXTURES_DIR, '1nf-violations.sql'));
     const findings = check1nf(contract);
 
     for (const f of findings) {
@@ -66,9 +61,8 @@ describe('check1nf', () => {
     }
   });
 
-  it('all findings have non-null fix suggestions', async () => {
-    const parsed = await parseSchema(resolve(FIXTURES_DIR, '1nf-violations.prisma'));
-    const contract = extractContract(parsed);
+  it('all findings have non-null fix suggestions', () => {
+    const contract = parseSqlSchema(resolve(FIXTURES_DIR, '1nf-violations.sql'));
     const findings = check1nf(contract);
 
     expect(findings.length).toBeGreaterThan(0);
@@ -78,9 +72,8 @@ describe('check1nf', () => {
     }
   });
 
-  it('produces no findings for a clean schema', async () => {
-    const parsed = await parseSchema(resolve(FIXTURES_DIR, 'basic.prisma'));
-    const contract = extractContract(parsed);
+  it('produces no findings for a clean schema', () => {
+    const contract = parseSqlSchema(resolve(FIXTURES_DIR, 'basic.sql'));
     const findings = check1nf(contract);
     expect(findings).toHaveLength(0);
   });

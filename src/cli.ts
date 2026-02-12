@@ -17,10 +17,10 @@ const EXIT_PARSE_ERROR = 3;
 
 function printUsage(): void {
   process.stdout.write(
-    `Usage: prisma-schema-auditor [options]
+    `Usage: schema-auditor [options]
 
 Options:
-  --schema <path>       Path to Prisma schema file (default: prisma/schema.prisma)
+  --schema <path>       Path to SQL DDL file (default: schema.sql)
   --invariants <path>   Path to invariants file (JSON)
   --format <fmt>        Output format: json | text (default: json)
   --out <path>          Write output to file instead of stdout
@@ -69,7 +69,7 @@ export async function main(argv?: string[]): Promise<number> {
   const schemaPath = resolve(
     typeof args.values['schema'] === 'string'
       ? args.values['schema']
-      : 'prisma/schema.prisma',
+      : 'schema.sql',
   );
 
   if (!existsSync(schemaPath)) {

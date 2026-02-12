@@ -1,15 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { resolve } from 'node:path';
-import { parseSchema } from '../../src/core/prismaSchema/parse.js';
-import { extractContract } from '../../src/core/prismaSchema/contract.js';
+import { parseSqlSchema } from '../../src/core/sqlSchema/parse.js';
 import { inferFunctionalDependencies } from '../../src/core/analysis/inferFds.js';
 
 const FIXTURES_DIR = resolve(import.meta.dirname, '../fixtures/schemas');
 
 describe('inferFunctionalDependencies', () => {
-  it('infers PK → all for each model', async () => {
-    const parsed = await parseSchema(resolve(FIXTURES_DIR, 'basic.prisma'));
-    const contract = extractContract(parsed);
+  it('infers PK → all for each model', () => {
+    const contract = parseSqlSchema(resolve(FIXTURES_DIR, 'basic.sql'));
     const fds = inferFunctionalDependencies(contract);
 
     const userPkFd = fds.find((fd) => fd.model === 'User' && fd.source === 'pk');
@@ -19,9 +17,8 @@ describe('inferFunctionalDependencies', () => {
     expect(userPkFd!.dependent).toContain('name');
   });
 
-  it('infers unique → all for unique constraints', async () => {
-    const parsed = await parseSchema(resolve(FIXTURES_DIR, 'basic.prisma'));
-    const contract = extractContract(parsed);
+  it('infers unique → all for unique constraints', () => {
+    const contract = parseSqlSchema(resolve(FIXTURES_DIR, 'basic.sql'));
     const fds = inferFunctionalDependencies(contract);
 
     const emailUniqueFd = fds.find(
@@ -32,9 +29,8 @@ describe('inferFunctionalDependencies', () => {
     expect(emailUniqueFd!.dependent).toContain('name');
   });
 
-  it('infers FK → referenced fields', async () => {
-    const parsed = await parseSchema(resolve(FIXTURES_DIR, 'basic.prisma'));
-    const contract = extractContract(parsed);
+  it('infers FK → referenced fields', () => {
+    const contract = parseSqlSchema(resolve(FIXTURES_DIR, 'basic.sql'));
     const fds = inferFunctionalDependencies(contract);
 
     const fkFd = fds.find((fd) => fd.model === 'Post' && fd.source === 'fk');
@@ -43,9 +39,8 @@ describe('inferFunctionalDependencies', () => {
     expect(fkFd!.dependent).toEqual(['User.id']);
   });
 
-  it('handles composite keys in FD inference', async () => {
-    const parsed = await parseSchema(resolve(FIXTURES_DIR, 'composite.prisma'));
-    const contract = extractContract(parsed);
+  it('handles composite keys in FD inference', () => {
+    const contract = parseSqlSchema(resolve(FIXTURES_DIR, 'composite.sql'));
     const fds = inferFunctionalDependencies(contract);
 
     // PostTag has only postId + tagId (both PK fields), so no PK→all FD is generated

@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { resolve } from 'node:path';
-import { parseSchema } from '../../src/core/prismaSchema/parse.js';
-import { extractContract } from '../../src/core/prismaSchema/contract.js';
+import { parseSqlSchema } from '../../src/core/sqlSchema/parse.js';
 import { inferFunctionalDependencies } from '../../src/core/analysis/inferFds.js';
 import { check3nf } from '../../src/core/analysis/normalizeChecks/check3nf.js';
 import { parseInvariantsFile, invariantsToFds } from '../../src/core/invariants/parse.js';
@@ -10,9 +9,8 @@ const SCHEMAS_DIR = resolve(import.meta.dirname, '../fixtures/schemas');
 const INVARIANTS_DIR = resolve(import.meta.dirname, '../fixtures/invariants');
 
 describe('check3nf', () => {
-  it('detects 3NF violation with invariant-declared transitive dependency', async () => {
-    const parsed = await parseSchema(resolve(SCHEMAS_DIR, '3nf-violations.prisma'));
-    const contract = extractContract(parsed);
+  it('detects 3NF violation with invariant-declared transitive dependency', () => {
+    const contract = parseSqlSchema(resolve(SCHEMAS_DIR, '3nf-violations.sql'));
     const schemaFds = inferFunctionalDependencies(contract);
 
     const { invariants } = parseInvariantsFile(resolve(INVARIANTS_DIR, '3nf-invariants.json'));
@@ -38,9 +36,8 @@ describe('check3nf', () => {
     expect(deptLocationFinding).toBeDefined();
   });
 
-  it('produces no 3NF findings without invariants', async () => {
-    const parsed = await parseSchema(resolve(SCHEMAS_DIR, '3nf-violations.prisma'));
-    const contract = extractContract(parsed);
+  it('produces no 3NF findings without invariants', () => {
+    const contract = parseSqlSchema(resolve(SCHEMAS_DIR, '3nf-violations.sql'));
     const fds = inferFunctionalDependencies(contract);
 
     // Without invariants, the transitive dependency isn't known
@@ -50,9 +47,8 @@ describe('check3nf', () => {
     expect(nf3Findings).toHaveLength(0);
   });
 
-  it('produces no findings for a clean schema with trivial invariants', async () => {
-    const parsed = await parseSchema(resolve(SCHEMAS_DIR, 'basic.prisma'));
-    const contract = extractContract(parsed);
+  it('produces no findings for a clean schema with trivial invariants', () => {
+    const contract = parseSqlSchema(resolve(SCHEMAS_DIR, 'basic.sql'));
     const schemaFds = inferFunctionalDependencies(contract);
 
     // email → name is already covered by email being a unique key
@@ -66,9 +62,8 @@ describe('check3nf', () => {
     expect(nf3Findings).toHaveLength(0);
   });
 
-  it('all findings have non-null fix suggestions', async () => {
-    const parsed = await parseSchema(resolve(SCHEMAS_DIR, '3nf-violations.prisma'));
-    const contract = extractContract(parsed);
+  it('all findings have non-null fix suggestions', () => {
+    const contract = parseSqlSchema(resolve(SCHEMAS_DIR, '3nf-violations.sql'));
     const schemaFds = inferFunctionalDependencies(contract);
 
     const { invariants } = parseInvariantsFile(resolve(INVARIANTS_DIR, '3nf-invariants.json'));
@@ -84,9 +79,8 @@ describe('check3nf', () => {
     }
   });
 
-  it('correctly classifies BCNF vs 3NF violations', async () => {
-    const parsed = await parseSchema(resolve(SCHEMAS_DIR, '3nf-violations.prisma'));
-    const contract = extractContract(parsed);
+  it('correctly classifies BCNF vs 3NF violations', () => {
+    const contract = parseSqlSchema(resolve(SCHEMAS_DIR, '3nf-violations.sql'));
     const schemaFds = inferFunctionalDependencies(contract);
 
     const { invariants } = parseInvariantsFile(resolve(INVARIANTS_DIR, '3nf-invariants.json'));

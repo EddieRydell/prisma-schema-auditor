@@ -8,7 +8,7 @@ function makeEmptyResult(): AuditResult {
     contract: { models: [] },
     findings: [],
     metadata: {
-      schemaPath: 'prisma/schema.prisma',
+      schemaPath: 'schema.sql',
       timestamp: null,
       modelCount: 0,
       findingCount: 0,
@@ -45,7 +45,7 @@ function makeResultWithFindings(): AuditResult {
       },
     ],
     metadata: {
-      schemaPath: 'prisma/schema.prisma',
+      schemaPath: 'schema.sql',
       timestamp: null,
       modelCount: 1,
       findingCount: 1,
@@ -68,10 +68,10 @@ describe('toJson', () => {
     const result1: AuditResult = {
       contract: { models: [] },
       findings: [],
-      metadata: { schemaPath: 'a.prisma', timestamp: null, modelCount: 0, findingCount: 0 },
+      metadata: { schemaPath: 'a.sql', timestamp: null, modelCount: 0, findingCount: 0 },
     };
     const result2: AuditResult = {
-      metadata: { findingCount: 0, modelCount: 0, schemaPath: 'a.prisma', timestamp: null },
+      metadata: { findingCount: 0, modelCount: 0, schemaPath: 'a.sql', timestamp: null },
       findings: [],
       contract: { models: [] },
     };
@@ -109,7 +109,7 @@ describe('toText', () => {
   it('includes header for empty result', () => {
     const result = makeEmptyResult();
     const text = toText(result);
-    expect(text).toContain('=== Prisma Schema Audit ===');
+    expect(text).toContain('=== Schema Audit ===');
     expect(text).toContain('Models:    0');
     expect(text).toContain('No normalization findings.');
   });

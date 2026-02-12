@@ -7,15 +7,15 @@ const FIXTURES_DIR = resolve(import.meta.dirname, '../fixtures/schemas');
 
 describe('audit (integration)', () => {
   it('produces deterministic JSON output for basic schema', async () => {
-    const result = await audit(resolve(FIXTURES_DIR, 'basic.prisma'), true);
+    const result = await audit(resolve(FIXTURES_DIR, 'basic.sql'), true);
     const json1 = toJson(result, false);
-    const result2 = await audit(resolve(FIXTURES_DIR, 'basic.prisma'), true);
+    const result2 = await audit(resolve(FIXTURES_DIR, 'basic.sql'), true);
     const json2 = toJson(result2, false);
     expect(json1).toBe(json2);
   });
 
   it('full audit result matches snapshot for basic schema', async () => {
-    const result = await audit(resolve(FIXTURES_DIR, 'basic.prisma'), true);
+    const result = await audit(resolve(FIXTURES_DIR, 'basic.sql'), true);
 
     expect(result.metadata.modelCount).toBe(2);
     expect(result.metadata.timestamp).toBeNull();
@@ -38,14 +38,14 @@ describe('audit (integration)', () => {
   });
 
   it('handles empty schema', async () => {
-    const result = await audit(resolve(FIXTURES_DIR, 'empty.prisma'), true);
+    const result = await audit(resolve(FIXTURES_DIR, 'empty.sql'), true);
     expect(result.metadata.modelCount).toBe(0);
     expect(result.contract.models).toHaveLength(0);
     expect(result.findings).toHaveLength(0);
   });
 
   it('detects soft-delete unique consistency issues', async () => {
-    const result = await audit(resolve(FIXTURES_DIR, 'soft-delete.prisma'), true);
+    const result = await audit(resolve(FIXTURES_DIR, 'soft-delete.sql'), true);
     const sdFindings = result.findings.filter(
       (f) => f.rule === 'SOFTDELETE_MISSING_IN_UNIQUE',
     );
@@ -55,17 +55,17 @@ describe('audit (integration)', () => {
   });
 
   it('does not flag FK_MISSING_INDEX when @@index covers FK', async () => {
-    const result = await audit(resolve(FIXTURES_DIR, 'fk-with-index.prisma'), true);
+    const result = await audit(resolve(FIXTURES_DIR, 'fk-with-index.sql'), true);
 
     const post = result.contract.models.find((m) => m.name === 'Post')!;
-    expect(post.indexes).toEqual([{ name: null, fields: ['authorId'] }]);
+    expect(post.indexes).toEqual([{ name: 'idx_post_author', fields: ['authorId'] }]);
 
     const fkFindings = result.findings.filter((f) => f.rule === 'FK_MISSING_INDEX');
     expect(fkFindings).toHaveLength(0);
   });
 
   it('handles composite key schema', async () => {
-    const result = await audit(resolve(FIXTURES_DIR, 'composite.prisma'), true);
+    const result = await audit(resolve(FIXTURES_DIR, 'composite.sql'), true);
     expect(result.metadata.modelCount).toBe(3);
 
     const postTag = result.contract.models.find((m) => m.name === 'PostTag')!;

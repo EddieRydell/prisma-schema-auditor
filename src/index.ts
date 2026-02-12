@@ -17,22 +17,12 @@ export type {
   ReferentialAction,
 } from './core/report/reportTypes.js';
 
-export type {
-  AuditModel,
-  AuditField,
-  AuditPrimaryKey,
-  AuditUniqueIndex,
-  AuditIndex,
-  ParseResult,
-} from './core/prismaSchema/types.js';
-
 export type { FunctionalDependency } from './core/analysis/inferFds.js';
 export type { CandidateKey } from './core/analysis/computeKeys.js';
 export type { InvariantsFile, InvariantFd } from './core/invariants/schema.js';
 export type { ParsedInvariants } from './core/invariants/parse.js';
 
-import { parseSchema } from './core/prismaSchema/parse.js';
-import { extractContract } from './core/prismaSchema/contract.js';
+import { parseSqlSchema } from './core/sqlSchema/parse.js';
 import { inferFunctionalDependencies } from './core/analysis/inferFds.js';
 import { check1nf } from './core/analysis/normalizeChecks/check1nf.js';
 import { check2nf } from './core/analysis/normalizeChecks/check2nf.js';
@@ -52,9 +42,10 @@ export interface AuditOptions {
 }
 
 /**
- * Run a full audit on a Prisma schema file.
+ * Run a full audit on a SQL DDL schema file.
  * Returns the constraint contract and normalization findings.
  */
+// eslint-disable-next-line @typescript-eslint/require-await -- async for backward API compat
 export async function audit(
   schemaPathOrOptions: string | AuditOptions,
   noTimestamp = false,
@@ -66,8 +57,7 @@ export async function audit(
 
   const shouldOmitTimestamp = options.noTimestamp === true;
 
-  const parsed = await parseSchema(options.schemaPath);
-  const contract = extractContract(parsed);
+  const contract = parseSqlSchema(options.schemaPath);
   const schemaFds = inferFunctionalDependencies(contract);
 
   // Merge invariant-declared FDs if provided
@@ -117,9 +107,9 @@ export interface GenerateInvariantsOptions {
  * Parses the schema, extracts constraints, and produces an InvariantsFile
  * with PK and unique FDs and auto-generated notes.
  */
+// eslint-disable-next-line @typescript-eslint/require-await -- async for backward API compat
 export async function generateInvariants(options: GenerateInvariantsOptions): Promise<InvariantsFile> {
-  const parsed = await parseSchema(options.schemaPath);
-  const contract = extractContract(parsed);
+  const contract = parseSqlSchema(options.schemaPath);
   const fds = inferFunctionalDependencies(contract);
   return generateInvariantsFile(contract, fds);
 }

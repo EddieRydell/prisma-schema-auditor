@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { resolve } from 'node:path';
-import { parseSchema } from '../../src/core/prismaSchema/parse.js';
-import { extractContract } from '../../src/core/prismaSchema/contract.js';
+import { parseSqlSchema } from '../../src/core/sqlSchema/parse.js';
 import { inferFunctionalDependencies } from '../../src/core/analysis/inferFds.js';
 import { generateInvariantsFile } from '../../src/core/invariants/generate.js';
 import { invariantsFileSchema } from '../../src/core/invariants/schema.js';
@@ -9,13 +8,12 @@ import { invariantsFileSchema } from '../../src/core/invariants/schema.js';
 const FIXTURES_DIR = resolve(import.meta.dirname, '../fixtures/schemas');
 
 describe('generateInvariantsFile', () => {
-  it('generates invariants with PK and unique FDs from basic schema', async () => {
-    const parsed = await parseSchema(resolve(FIXTURES_DIR, 'basic.prisma'));
-    const contract = extractContract(parsed);
+  it('generates invariants with PK and unique FDs from basic schema', () => {
+    const contract = parseSqlSchema(resolve(FIXTURES_DIR, 'basic.sql'));
     const fds = inferFunctionalDependencies(contract);
     const result = generateInvariantsFile(contract, fds);
 
-    // basic.prisma has User (PK id, unique email) and Post (PK id)
+    // basic.sql has User (PK id, unique email) and Post (PK id)
     expect(result).toHaveProperty('User');
     expect(result).toHaveProperty('Post');
 
@@ -36,9 +34,8 @@ describe('generateInvariantsFile', () => {
     expect(uniqueFd!.rule).toBe('Each User is uniquely identified by email');
   });
 
-  it('excludes FK FDs (no dotted dependents)', async () => {
-    const parsed = await parseSchema(resolve(FIXTURES_DIR, 'basic.prisma'));
-    const contract = extractContract(parsed);
+  it('excludes FK FDs (no dotted dependents)', () => {
+    const contract = parseSqlSchema(resolve(FIXTURES_DIR, 'basic.sql'));
     const fds = inferFunctionalDependencies(contract);
     const result = generateInvariantsFile(contract, fds);
 
@@ -52,9 +49,8 @@ describe('generateInvariantsFile', () => {
     }
   });
 
-  it('produces deterministic sorted output', async () => {
-    const parsed = await parseSchema(resolve(FIXTURES_DIR, 'basic.prisma'));
-    const contract = extractContract(parsed);
+  it('produces deterministic sorted output', () => {
+    const contract = parseSqlSchema(resolve(FIXTURES_DIR, 'basic.sql'));
     const fds = inferFunctionalDependencies(contract);
 
     const result1 = generateInvariantsFile(contract, fds);
@@ -67,9 +63,8 @@ describe('generateInvariantsFile', () => {
     expect(modelNames).toEqual([...modelNames].sort());
   });
 
-  it('handles composite keys (PostTag with no non-PK fields is skipped)', async () => {
-    const parsed = await parseSchema(resolve(FIXTURES_DIR, 'composite.prisma'));
-    const contract = extractContract(parsed);
+  it('handles composite keys (PostTag with no non-PK fields is skipped)', () => {
+    const contract = parseSqlSchema(resolve(FIXTURES_DIR, 'composite.sql'));
     const fds = inferFunctionalDependencies(contract);
     const result = generateInvariantsFile(contract, fds);
 
@@ -84,9 +79,8 @@ describe('generateInvariantsFile', () => {
     }
   });
 
-  it('generates composite rule text for multi-field determinants', async () => {
-    const parsed = await parseSchema(resolve(FIXTURES_DIR, 'composite.prisma'));
-    const contract = extractContract(parsed);
+  it('generates composite rule text for multi-field determinants', () => {
+    const contract = parseSqlSchema(resolve(FIXTURES_DIR, 'composite.sql'));
     const fds = inferFunctionalDependencies(contract);
     const result = generateInvariantsFile(contract, fds);
 
@@ -96,9 +90,8 @@ describe('generateInvariantsFile', () => {
     expect(uniqueFd?.rule).toBe('Each Tag is uniquely identified by name');
   });
 
-  it('all generated FDs include a rule field', async () => {
-    const parsed = await parseSchema(resolve(FIXTURES_DIR, 'basic.prisma'));
-    const contract = extractContract(parsed);
+  it('all generated FDs include a rule field', () => {
+    const contract = parseSqlSchema(resolve(FIXTURES_DIR, 'basic.sql'));
     const fds = inferFunctionalDependencies(contract);
     const result = generateInvariantsFile(contract, fds);
 
@@ -111,9 +104,8 @@ describe('generateInvariantsFile', () => {
     }
   });
 
-  it('generated output validates against invariants Zod schema', async () => {
-    const parsed = await parseSchema(resolve(FIXTURES_DIR, 'basic.prisma'));
-    const contract = extractContract(parsed);
+  it('generated output validates against invariants Zod schema', () => {
+    const contract = parseSqlSchema(resolve(FIXTURES_DIR, 'basic.sql'));
     const fds = inferFunctionalDependencies(contract);
     const result = generateInvariantsFile(contract, fds);
 

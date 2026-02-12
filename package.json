@@ -1,7 +1,7 @@
 {
-  "name": "prisma-schema-auditor",
+  "name": "schema-auditor",
   "version": "0.1.0",
-  "description": "Static analysis for Prisma schemas: deterministic constraint contracts + normalization lint findings (1NF/2NF; 3NF+ via invariants)",
+  "description": "Static analysis for SQL DDL schemas: deterministic constraint contracts + normalization lint findings (1NF/2NF; 3NF+ via invariants)",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -12,7 +12,7 @@
     }
   },
   "bin": {
-    "prisma-schema-auditor": "./dist/cli.js"
+    "schema-auditor": "./dist/cli.js"
   },
   "files": [
     "dist",
@@ -34,7 +34,9 @@
     "version": "pnpm run build"
   },
   "keywords": [
-    "prisma",
+    "sql",
+    "ddl",
+    "postgresql",
     "schema",
     "audit",
     "normalization",
@@ -49,24 +51,18 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/EddieRydell/prisma-schema-auditor.git"
+    "url": "git+https://github.com/EddieRydell/schema-auditor.git"
   },
-  "homepage": "https://github.com/EddieRydell/prisma-schema-auditor#readme",
+  "homepage": "https://github.com/EddieRydell/schema-auditor#readme",
   "bugs": {
-    "url": "https://github.com/EddieRydell/prisma-schema-auditor/issues"
-  },
-  "peerDependencies": {
-    "@prisma/internals": ">=7.0.0",
-    "prisma": ">=7.0.0"
+    "url": "https://github.com/EddieRydell/schema-auditor/issues"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
-    "@prisma/internals": "^7.0.0",
     "@types/node": "^25.2.1",
     "@vitest/coverage-v8": "^4.0.18",
     "eslint": "^9.0.0",
     "knip": "^5.0.0",
-    "prisma": "^7.0.0",
     "semantic-release": "^25.0.3",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.0.0",
@@ -79,6 +75,7 @@
     "node": ">=18"
   },
   "dependencies": {
+    "node-sql-parser": "^5.3.8",
     "zod": "^4.3.6"
   }
 }

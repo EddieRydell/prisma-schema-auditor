@@ -3,6 +3,5 @@
   "project": ["src/**/*.ts", "tests/**/*.ts"],
   "ignore": [
     "src/core/analysis/computeKeys.ts"
-  ],
-  "ignoreDependencies": ["prisma"]
+  ]
 }

@@ -7,10 +7,10 @@ import { main } from '../../src/cli.js';
 const SCHEMAS_DIR = resolve(import.meta.dirname, '../fixtures/schemas');
 const INVARIANTS_DIR = resolve(import.meta.dirname, '../fixtures/invariants');
 
-const BASIC_SCHEMA = resolve(SCHEMAS_DIR, 'basic.prisma');
-const NF1_SCHEMA = resolve(SCHEMAS_DIR, '1nf-violations.prisma');
-const NF3_SCHEMA = resolve(SCHEMAS_DIR, '3nf-violations.prisma');
-const MALFORMED_SCHEMA = resolve(SCHEMAS_DIR, 'malformed.prisma');
+const BASIC_SCHEMA = resolve(SCHEMAS_DIR, 'basic.sql');
+const NF1_SCHEMA = resolve(SCHEMAS_DIR, '1nf-violations.sql');
+const NF3_SCHEMA = resolve(SCHEMAS_DIR, '3nf-violations.sql');
+const MALFORMED_SCHEMA = resolve(SCHEMAS_DIR, 'malformed.sql');
 const NF3_INVARIANTS = resolve(INVARIANTS_DIR, '3nf-invariants.json');
 
 describe('CLI', () => {
@@ -43,7 +43,7 @@ describe('CLI', () => {
     it('prints usage and returns 0', async () => {
       const code = await main(['--help']);
       expect(code).toBe(0);
-      expect(stdoutOutput).toContain('Usage: prisma-schema-auditor');
+      expect(stdoutOutput).toContain('Usage: schema-auditor');
       expect(stdoutOutput).toContain('--schema');
       expect(stdoutOutput).toContain('--format');
       expect(stdoutOutput).toContain('--fail-on');
@@ -72,7 +72,7 @@ describe('CLI', () => {
 
   describe('file validation', () => {
     it('rejects nonexistent --schema path with exit code 2', async () => {
-      const code = await main(['--schema', '/nonexistent/schema.prisma']);
+      const code = await main(['--schema', '/nonexistent/schema.sql']);
       expect(code).toBe(2);
       expect(stderrOutput).toContain('Schema file not found');
     });
@@ -105,7 +105,7 @@ describe('CLI', () => {
     it('outputs text with --format text', async () => {
       const code = await main(['--schema', BASIC_SCHEMA, '--format', 'text', '--no-timestamp']);
       expect(code).toBe(0);
-      expect(stdoutOutput).toContain('=== Prisma Schema Audit ===');
+      expect(stdoutOutput).toContain('=== Schema Audit ===');
       expect(stdoutOutput).toContain('Models:    2');
       expect(stdoutOutput).toContain('FK_MISSING_INDEX');
     });
@@ -323,7 +323,7 @@ describe('CLI', () => {
       const code = await main(['--schema', BASIC_SCHEMA, '--format', 'text', '--no-timestamp', '--findings-only']);
       expect(code).toBe(0);
 
-      expect(stdoutOutput).toContain('=== Prisma Schema Audit ===');
+      expect(stdoutOutput).toContain('=== Schema Audit ===');
       expect(stdoutOutput).not.toContain('--- Constraint Contract ---');
     });
   });

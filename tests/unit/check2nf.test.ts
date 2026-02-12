@@ -1,16 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { resolve } from 'node:path';
-import { parseSchema } from '../../src/core/prismaSchema/parse.js';
-import { extractContract } from '../../src/core/prismaSchema/contract.js';
+import { parseSqlSchema } from '../../src/core/sqlSchema/parse.js';
 import { inferFunctionalDependencies } from '../../src/core/analysis/inferFds.js';
 import { check2nf } from '../../src/core/analysis/normalizeChecks/check2nf.js';
 
 const FIXTURES_DIR = resolve(import.meta.dirname, '../fixtures/schemas');
 
 describe('check2nf', () => {
-  it('detects join tables with extra attributes', async () => {
-    const parsed = await parseSchema(resolve(FIXTURES_DIR, '2nf-violations.prisma'));
-    const contract = extractContract(parsed);
+  it('detects join tables with extra attributes', () => {
+    const contract = parseSqlSchema(resolve(FIXTURES_DIR, '2nf-violations.sql'));
     const fds = inferFunctionalDependencies(contract);
     const findings = check2nf(contract, fds);
 
@@ -25,9 +23,8 @@ describe('check2nf', () => {
     expect(enrollmentFinding!.message).toContain('enrolledAt');
   });
 
-  it('detects partial dependency suspects in composite-key models', async () => {
-    const parsed = await parseSchema(resolve(FIXTURES_DIR, '2nf-violations.prisma'));
-    const contract = extractContract(parsed);
+  it('detects partial dependency suspects in composite-key models', () => {
+    const contract = parseSqlSchema(resolve(FIXTURES_DIR, '2nf-violations.sql'));
     const fds = inferFunctionalDependencies(contract);
     const findings = check2nf(contract, fds);
 
@@ -46,9 +43,8 @@ describe('check2nf', () => {
     }
   });
 
-  it('all findings have correct normalForm', async () => {
-    const parsed = await parseSchema(resolve(FIXTURES_DIR, '2nf-violations.prisma'));
-    const contract = extractContract(parsed);
+  it('all findings have correct normalForm', () => {
+    const contract = parseSqlSchema(resolve(FIXTURES_DIR, '2nf-violations.sql'));
     const fds = inferFunctionalDependencies(contract);
     const findings = check2nf(contract, fds);
 
@@ -58,9 +54,8 @@ describe('check2nf', () => {
     }
   });
 
-  it('all findings have non-null fix suggestions', async () => {
-    const parsed = await parseSchema(resolve(FIXTURES_DIR, '2nf-violations.prisma'));
-    const contract = extractContract(parsed);
+  it('all findings have non-null fix suggestions', () => {
+    const contract = parseSqlSchema(resolve(FIXTURES_DIR, '2nf-violations.sql'));
     const fds = inferFunctionalDependencies(contract);
     const findings = check2nf(contract, fds);
 
@@ -71,17 +66,15 @@ describe('check2nf', () => {
     }
   });
 
-  it('produces no findings for a schema without composite keys', async () => {
-    const parsed = await parseSchema(resolve(FIXTURES_DIR, 'basic.prisma'));
-    const contract = extractContract(parsed);
+  it('produces no findings for a schema without composite keys', () => {
+    const contract = parseSqlSchema(resolve(FIXTURES_DIR, 'basic.sql'));
     const fds = inferFunctionalDependencies(contract);
     const findings = check2nf(contract, fds);
     expect(findings).toHaveLength(0);
   });
 
-  it('produces no findings for a clean join table (no extra attrs)', async () => {
-    const parsed = await parseSchema(resolve(FIXTURES_DIR, 'composite.prisma'));
-    const contract = extractContract(parsed);
+  it('produces no findings for a clean join table (no extra attrs)', () => {
+    const contract = parseSqlSchema(resolve(FIXTURES_DIR, 'composite.sql'));
     const fds = inferFunctionalDependencies(contract);
     const findings = check2nf(contract, fds);
 

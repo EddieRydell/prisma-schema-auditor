@@ -6,7 +6,7 @@ import type { AuditResult, FormatOptions } from './reportTypes.js';
 export function toText(result: AuditResult, options?: FormatOptions): string {
   const lines: string[] = [];
 
-  lines.push('=== Prisma Schema Audit ===');
+  lines.push('=== Schema Audit ===');
   lines.push('');
 
   if (result.metadata.timestamp !== null) {

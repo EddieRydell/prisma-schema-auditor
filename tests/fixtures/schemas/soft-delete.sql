@@ -1,0 +1,25 @@
+CREATE TABLE "User" (
+  id SERIAL PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  name TEXT,
+  deleted_at TIMESTAMPTZ
+);
+
+CREATE TABLE "Account" (
+  id SERIAL PRIMARY KEY,
+  slug TEXT NOT NULL,
+  "deletedAt" TIMESTAMPTZ,
+  UNIQUE (slug, "deletedAt")
+);
+
+CREATE TABLE "Post" (
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL
+);
+
+CREATE TABLE "Product" (
+  id SERIAL PRIMARY KEY,
+  sku TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL UNIQUE,
+  deleted_at TIMESTAMPTZ
+);
