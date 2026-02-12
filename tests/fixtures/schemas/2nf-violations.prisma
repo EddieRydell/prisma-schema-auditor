@@ -1,0 +1,55 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Student {
+  id       Int @id @default(autoincrement())
+  name     String
+  courses  Enrollment[]
+}
+
+model Course {
+  id       Int @id @default(autoincrement())
+  title    String
+  students Enrollment[]
+}
+
+/// Join table with extra attributes - 2NF violation
+model Enrollment {
+  studentId    Int
+  courseId      Int
+  student      Student @relation(fields: [studentId], references: [id])
+  course       Course  @relation(fields: [courseId], references: [id])
+  grade        String
+  enrolledAt   DateTime @default(now())
+
+  @@id([studentId, courseId])
+}
+
+model Department {
+  id       Int @id @default(autoincrement())
+  name     String
+  projects ProjectAssignment[]
+}
+
+model Employee {
+  id       Int @id @default(autoincrement())
+  name     String
+  projects ProjectAssignment[]
+}
+
+/// Composite key with partial dependency potential
+model ProjectAssignment {
+  departmentId  Int
+  employeeId    Int
+  department    Department @relation(fields: [departmentId], references: [id])
+  employee      Employee   @relation(fields: [employeeId], references: [id])
+  role          String
+  startDate     DateTime
+
+  @@id([departmentId, employeeId])
+}
