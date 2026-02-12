@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
-import { Parser } from 'node-sql-parser';
+import nodeSqlParser from 'node-sql-parser';
+const { Parser } = nodeSqlParser;
 import { sortBy } from '../../util/index.js';
 import type {
   ConstraintContract,
@@ -20,6 +21,7 @@ interface AstColumnExpr {
 }
 
 interface AstColumnRef {
+  readonly type?: string | undefined;
   readonly column: { readonly expr: AstColumnExpr };
 }
 
@@ -61,6 +63,19 @@ interface AstCreateIndex {
   readonly index: string;
   readonly table: { readonly table: string };
   readonly index_columns: readonly AstColumnRef[];
+}
+
+interface AstAlterExpr {
+  readonly action: string;
+  readonly resource: string;
+  readonly create_definitions: AstConstraintDef;
+}
+
+interface AstAlterTable {
+  readonly type: string;
+  readonly keyword: string;
+  readonly table: readonly [{ readonly table: string }];
+  readonly expr: readonly AstAlterExpr[];
 }
 
 interface AstRawStatement {
@@ -177,12 +192,14 @@ export function parseSqlString(sql: string): ConstraintContract {
   }
 
   for (const stmt of rawStatements) {
-    if (stmt.type !== 'create') continue;
-
-    if (stmt.keyword === 'table') {
-      processCreateTable(stmt as unknown as AstCreateTable, ensureTable);
-    } else if (stmt.keyword === 'index') {
-      processCreateIndex(stmt as unknown as AstCreateIndex, ensureTable);
+    if (stmt.type === 'create') {
+      if (stmt.keyword === 'table') {
+        processCreateTable(stmt as unknown as AstCreateTable, ensureTable);
+      } else if (stmt.keyword === 'index') {
+        processCreateIndex(stmt as unknown as AstCreateIndex, ensureTable);
+      }
+    } else if (stmt.type === 'alter' && stmt.keyword === 'table') {
+      processAlterTable(stmt as unknown as AstAlterTable, ensureTable);
     }
   }
 
@@ -288,10 +305,57 @@ function processCreateTable(stmt: AstCreateTable, ensureTable: EnsureTable): voi
   }
 }
 
+function processAlterTable(stmt: AstAlterTable, ensureTable: EnsureTable): void {
+  const tableName = stmt.table[0].table;
+  const table = ensureTable(tableName);
+
+  for (const expr of stmt.expr) {
+    if (expr.action !== 'add' || expr.resource !== 'constraint') continue;
+    const def = expr.create_definitions;
+    const ctype = def.constraint_type.toLowerCase();
+
+    if (ctype === 'primary key') {
+      const fields = def.definition.map(colName);
+      table.primaryKey = { fields, isComposite: fields.length > 1 };
+    } else if (ctype === 'unique') {
+      const fields = def.definition.map(colName);
+      table.uniqueConstraints.push({
+        name: def.constraint ?? null,
+        fields,
+        isComposite: fields.length > 1,
+      });
+    } else if (ctype === 'foreign key' && def.reference_definition !== undefined) {
+      const ref = def.reference_definition;
+      let onDelete: ReferentialAction = DEFAULT_ON_DELETE;
+      let onUpdate: ReferentialAction = DEFAULT_ON_UPDATE;
+
+      for (const action of ref.on_action) {
+        if (action.type === 'on delete') {
+          onDelete = toReferentialAction(action.value.value, DEFAULT_ON_DELETE);
+        } else if (action.type === 'on update') {
+          onUpdate = toReferentialAction(action.value.value, DEFAULT_ON_UPDATE);
+        }
+      }
+
+      table.foreignKeys.push({
+        fields: def.definition.map(colName),
+        referencedModel: ref.table[0].table,
+        referencedFields: ref.definition.map(colName),
+        onDelete,
+        onUpdate,
+      });
+    }
+  }
+}
+
 function processCreateIndex(stmt: AstCreateIndex, ensureTable: EnsureTable): void {
   const tableName = stmt.table.table;
   const table = ensureTable(tableName);
-  const fields = stmt.index_columns.map(colName);
+
+  // Filter out expression-based index columns (e.g. lower(), to_tsvector())
+  const simpleColumns = stmt.index_columns.filter((c) => c.type === 'column_ref');
+  if (simpleColumns.length === 0) return;
+  const fields = simpleColumns.map(colName);
 
   if (stmt.index_type === 'unique') {
     table.uniqueConstraints.push({
